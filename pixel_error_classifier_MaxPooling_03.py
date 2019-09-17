@@ -60,7 +60,7 @@ validation_data_dir = 'validation/'
 test_dir = 'test/'
 nb_train_samples = 375000
 nb_validation_samples = 160000
-epochs = 10
+epochs = 15
 batch_size = 500
 location = !pwd
 
@@ -72,6 +72,25 @@ else:
 n_images = nb_train_samples + nb_validation_samples
 print(f"[INFO] loading {n_images} images from '{location[-1].split('/')[-1]}' ...")
 
+# build metrics
+def recall(y_true, y_pred):
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+        recall = true_positives / (possible_positives + K.epsilon())
+        return recall
+
+def precision(y_true, y_pred):
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+        precision = true_positives / (predicted_positives + K.epsilon())
+        return precision
+
+def f1(y_true, y_pred):
+    precision = precision(y_true, y_pred)
+    recall = recall(y_true, y_pred)
+    return 2*((precision*recall)/(precision+recall+K.epsilon()))
+
+# build model
 K.clear_session()
 model = Sequential()
 # padding anschalten um die ecken zu checken
@@ -95,8 +114,8 @@ model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
 opt = Adam(lr=1e-4, decay=1e-4 / epochs)
-model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
-#              optimizer='rmsprop',
+model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy', f1, precision, recall])
+#optimizer='rmsprop',
 
 # checkpoint
 checkpoint = ModelCheckpoint(filepath='model/bestmodel_weights_maxpooling.hdf5', monitor='val_acc', verbose=1, save_best_only=True, mode='max')
@@ -131,11 +150,13 @@ hist = model.fit_generator(
     validation_steps=nb_validation_samples // batch_size,
     callbacks=callbacks_list)
 
+ti = strftime("%H-%M-%S", gmtime())
+
 # save eights to HDF5
-model.save_weights('model/cnn-model_maxpooling_03.h5')
+model.save_weights(f'model/cnn-model_maxpooling_{ti}.h5')
 print("Saved model to disk")
 # save model to JSON
-with open("model/model_maxpooling_03.json", "w") as json_file:
+with open(f"model/model_maxpooling_{ti}.json", "w") as json_file:
     json_file.write(model.to_json())
 
 
@@ -159,7 +180,6 @@ print("[INFO] evaluating network...")
 # plot the training loss and accuracy
 
 epochs = len(list(hist.history.values())[0])
-ti = strftime("%H-%M-%S", gmtime())
 
 fig = plt.plot()
 plt.plot(np.arange(0, epochs), hist.history["loss"], label="train_loss")
