@@ -99,7 +99,7 @@ model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
 #              optimizer='rmsprop',
 
 # checkpoint
-checkpoint = ModelCheckpoint(filepath='bestmodel_weights.hdf5', monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+checkpoint = ModelCheckpoint(filepath='model/bestmodel_weights_maxpooling.hdf5', monitor='val_acc', verbose=1, save_best_only=True, mode='max')
 earlystopper = EarlyStopping(monitor='val_loss', patience=4, verbose=1)
 callbacks_list = [checkpoint]
 model.summary()
@@ -132,10 +132,10 @@ hist = model.fit_generator(
     callbacks=callbacks_list)
 
 # save eights to HDF5
-model.save_weights('cnn-model_stride_01.h5')
+model.save_weights('model/cnn-model_maxpooling_03.h5')
 print("Saved model to disk")
 # save model to JSON
-with open("model_stride_01.json", "w") as json_file:
+with open("model/model_maxpooling_03.json", "w") as json_file:
     json_file.write(model.to_json())
 
 
@@ -175,6 +175,6 @@ plt.show()
 
 result = dict(zip([each[0] for each in predict], [filename.split('.')[-2].split('/')[-1] for filename in filenames]))
 df = pd.DataFrame(result, index=range(1))
-df.to_csv('result.csv', index=False)
+df.to_csv('result_maxpooling.csv', index=False)
 
 result
