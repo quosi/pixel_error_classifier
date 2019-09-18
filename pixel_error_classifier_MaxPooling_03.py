@@ -79,7 +79,7 @@ K.clear_session()
 model = Sequential()
 # padding anschalten um die ecken zu checken
 model.add(Conv2D(8, (3, 3), input_shape=input_shape, padding='same', kernel_regularizer=regularizers.l2(0.01), use_bias=True))
-model.add(BatchNormalization(epsilon=1e-06, mode=0, momentum=0.9, weights=None))
+#model.add(BatchNormalization(epsilon=1e-06, mode=0, momentum=0.9, weights=None))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
@@ -90,13 +90,13 @@ model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Dropout(0.5))
 model.add(Conv2D(32, (3, 3), use_bias=True, kernel_regularizer=regularizers.l2(0.01),))
-model.add(BatchNormalization())
+#model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Flatten())
 model.add(Dense(64))
-model.add(BatchNormalization())
+#model.add(BatchNormalization())
 model.add(Activation('relu'))
 
 model.add(Dropout(0.5))

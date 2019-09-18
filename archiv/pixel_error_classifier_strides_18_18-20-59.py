@@ -63,9 +63,9 @@ test_dir = 'keras_cnn/test/'
 nb_train_samples = 375000
 nb_validation_samples = 160000
 epochs = 15
-batch_size = 300
+batch_size = 500
 location = os.getcwd()
-!pwd
+
 if K.image_data_format() == 'channels_first':
     input_shape = (3, img_width, img_height)
 else:
@@ -74,25 +74,26 @@ else:
 n_images = nb_train_samples + nb_validation_samples
 print(f"[INFO] loading {n_images} images from '{location.split('/')[-1]}' ...")
 
+
 K.clear_session()
 model = Sequential()
 # padding anschalten um die ecken zu checken
 model.add(Conv2D(8, (3, 3), input_shape=input_shape, strides=(2,2), padding='same', kernel_regularizer=regularizers.l2(0.01), use_bias=True))
-#odel.add(BatchNormalization(epsilon=1e-06, mode=0, momentum=0.9, weights=None))
+model.add(BatchNormalization(epsilon=1e-06, mode=0, momentum=0.9, weights=None))
 model.add(Activation('relu'))
 
 model.add(Conv2D(8, (3, 3), padding='same', strides=(2,2), kernel_regularizer=regularizers.l2(0.01), use_bias=True))
-#model.add(BatchNormalization())
+model.add(BatchNormalization())
 model.add(Activation('relu'))
 
 model.add(Dropout(0.5))
 model.add(Conv2D(32, (3, 3), use_bias=True, strides=(2,2), kernel_regularizer=regularizers.l2(0.01),))
-#model.add(BatchNormalization())
+model.add(BatchNormalization())
 model.add(Activation('relu'))
 
 model.add(Flatten())
 model.add(Dense(64))
-#model.add(BatchNormalization())
+model.add(BatchNormalization())
 model.add(Activation('relu'))
 
 model.add(Dropout(0.5))
@@ -186,6 +187,6 @@ result = dict(zip([each[0] for each in predict], [filename.split('.')[-2].split(
 df = pd.DataFrame(result, index=range(1))
 df = df.T.reset_index()
 df.columns = ['y_pred', 'filename']
-df.head()
+df
 df.to_csv(f'keras_cnn/result_csv/result_strides_{ti}.csv', index=False)
 plt.plot(y_true, y_pred)
