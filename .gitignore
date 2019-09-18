@@ -128,3 +128,4 @@ token.pickle
 /test
 /train
 /validation
+/result_csv

@@ -15,7 +15,7 @@ from PIL import Image
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-!pwd
+
 # CNN model setup
 # VERSION 2 zachariah047_384_960
 '''
@@ -64,7 +64,7 @@ nb_train_samples = 375000
 nb_validation_samples = 160000
 epochs = 15
 batch_size = 500
-location = !pwd
+location = os.getcwd()
 
 if K.image_data_format() == 'channels_first':
     input_shape = (3, img_width, img_height)
@@ -81,17 +81,15 @@ model = Sequential()
 model.add(Conv2D(8, (3, 3), input_shape=input_shape, strides=(2,2), padding='same', kernel_regularizer=regularizers.l2(0.01), use_bias=True))
 model.add(BatchNormalization(epsilon=1e-06, mode=0, momentum=0.9, weights=None))
 model.add(Activation('relu'))
-#model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Conv2D(8, (3, 3), padding='same', strides=(2,2), kernel_regularizer=regularizers.l2(0.01), use_bias=True))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
-#model.add(MaxPooling2D(pool_size=(2, 2)))
 
+model.add(Dropout(0.5))
 model.add(Conv2D(32, (3, 3), use_bias=True, strides=(2,2), kernel_regularizer=regularizers.l2(0.01),))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
-#model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Flatten())
 model.add(Dense(64))
@@ -103,8 +101,8 @@ model.add(Dense(1))
 model.add(Activation('sigmoid'))
 opt = Adam(lr=1e-4, decay=1e-4 / epochs)
 model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
-#              optimizer='rmsprop',
-# checkpoint
+
+# checkpoints
 checkpoint = ModelCheckpoint(filepath='model/bestmodel_weights_strides.hdf5', monitor='val_acc', verbose=1, save_best_only=True, mode='max')
 earlystopper = EarlyStopping(monitor='val_loss', patience=4, verbose=1)
 callbacks_list = [checkpoint]
@@ -113,7 +111,7 @@ model.summary()
 # this is the augmentation configuration we will use for training
 train_datagen = ImageDataGenerator(horizontal_flip=True)
 # this is the augmentation configuration we will use for testing:
-test_datagen = ImageDataGenerator()
+test_datagen = ImageDataGenerator(horizontal_flip=True)
 
 train_generator = train_datagen.flow_from_directory(
     train_data_dir,
@@ -135,9 +133,9 @@ hist = model.fit_generator(
     epochs=epochs,
     validation_data=validation_generator,
     validation_steps=nb_validation_samples // batch_size,
-    callbacks=[callbacks_list])
+    callbacks=[checkpoint])
 
-ti = strftime("%H-%M-%S", gmtime())
+ti = strftime("%d_%H-%M-%S", gmtime())
 
 # save eights to HDF5
 model.save_weights(f'model/cnn-model_strides_{ti}.h5')
@@ -146,28 +144,10 @@ print("Saved model to disk")
 with open(f"model/model_strides_{ti}.json", "w") as json_file:
     json_file.write(model.to_json())
 
-test_generator = test_datagen.flow_from_directory(
-        test_dir,
-        target_size=(img_width, img_height),
-        color_mode="rgb",
-        shuffle = False,
-        class_mode='binary',
-        batch_size=1)
-
-filenames = test_generator.filenames
-nb_samples = len(filenames)
-
-predict = model.predict_generator(test_generator,steps = nb_samples)
-
-
-
 # evaluate the network
 print("[INFO] evaluating network...")
-# print(classification_report(testY.argmax(axis=1), predict.argmax(axis=1), target_names=lb.classes_))
 # plot the training loss and accuracy
-
 epochs = len(list(hist.history.values())[0])
-
 fig = plt.figure()
 plt.plot(np.arange(0, epochs), hist.history["loss"], label="train_loss")
 plt.plot(np.arange(0, epochs), hist.history["val_loss"], label="val_loss")
@@ -177,12 +157,36 @@ plt.title("Training Loss and Accuracy on Dataset")
 plt.xlabel(f"Epoch (max. {epochs})")
 plt.ylabel("Loss/Accuracy")
 plt.legend(loc="lower left")
-plt.savefig(f"plot_strides_{ti}.png")
+plt.savefig(f"plots/plot_strides_{ti}.png")
 plt.show()
+
+test_generator = test_datagen.flow_from_directory(
+test_dir,
+target_size=(img_width, img_height),
+color_mode="rgb",
+shuffle = False,
+class_mode='binary',
+batch_size=1)
+
+filenames = test_generator.filenames
+nb_samples = len(filenames)
+predict = model.predict_generator(test_generator,steps = nb_samples)
+y_pred = [i[0].round() for i in predict]
+
+# set y_true for test data
+images_clean = os.listdir('test/clean')
+images_error = os.listdir('test/error')
+filenames = list(np.concatenate((images_clean, images_error), axis=0))
+y_clean = np.zeros(len(images_clean))
+y_error =  np.ones(len(images_error))
+y_true = list(np.concatenate((y_clean, y_error), axis=0))
+
+print(classification_report(y_true, y_pred))
 
 result = dict(zip([each[0] for each in predict], [filename.split('.')[-2].split('/')[-1] for filename in filenames]))
 df = pd.DataFrame(result, index=range(1))
-df.to_csv('result_strides.csv', index=False)
-
-
-result
+df = df.T.reset_index()
+df.columns = ['y_pred', 'filename']
+df.head()
+df.to_csv(f'result_csv/result_strides_{ti}.csv', index=False)
+plt.plot(y_true, y_pred)

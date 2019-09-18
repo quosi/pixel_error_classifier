@@ -73,24 +73,6 @@ else:
 n_images = nb_train_samples + nb_validation_samples
 print(f"[INFO] loading {n_images} images from '{location.split('/')[-1]}' ...")
 
-# build metrics
-def recall(y_true, y_pred):
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-    recall = true_positives / (possible_positives + K.epsilon())
-    return recall
-
-def precision(y_true, y_pred):
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-    precision = true_positives / (predicted_positives + K.epsilon())
-    return precision
-
-def f1(y_true, y_pred):
-    precision = precision(y_true, y_pred)
-    recall = recall(y_true, y_pred)
-    return 2*((precision*recall)/(precision+recall+K.epsilon()))
-
 # build model
 K.clear_session()
 model = Sequential()
@@ -105,6 +87,7 @@ model.add(BatchNormalization())
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
+model.add(Dropout(0.5))
 model.add(Conv2D(32, (3, 3), use_bias=True, kernel_regularizer=regularizers.l2(0.01),))
 model.add(BatchNormalization())
 model.add(Activation('relu'))
@@ -156,7 +139,7 @@ hist = model.fit_generator(
     validation_steps=nb_validation_samples // batch_size,
     callbacks=callbacks_list)
 
-ti = strftime("%H-%M-%S", gmtime())
+ti = strftime("%d_%H-%M-%S", gmtime())
 
 # save eights to HDF5
 model.save_weights(f'model/cnn-model_maxpooling_{ti}.h5')
@@ -164,20 +147,6 @@ print("Saved model to disk")
 # save model to JSON
 with open(f"model/model_maxpooling_{ti}.json", "w") as json_file:
     json_file.write(model.to_json())
-
-
-test_generator = test_datagen.flow_from_directory(
-        test_dir,
-        target_size=(img_width, img_height),
-        color_mode="rgb",
-        shuffle = False,
-        class_mode='binary',
-        batch_size=1)
-
-filenames = test_generator.filenames
-nb_samples = len(filenames)
-
-predict = model.predict_generator(test_generator,steps = nb_samples)
 
 #print(classification_report(testY.argmax(axis=1), predictions.argmax(axis=1), target_names=["class1", "class2"]))
 
@@ -197,11 +166,37 @@ plt.title("Training Loss and Accuracy on Dataset")
 plt.xlabel(f"Epoch (max. {epochs})")
 plt.ylabel("Loss/Accuracy")
 plt.legend(loc="lower left")
-plt.savefig(f"plot_maxpooling_{ti}.png")
+plt.savefig(f"plots/plot_maxpooling_{ti}.png")
 plt.show()
+
+test_generator = test_datagen.flow_from_directory(
+test_dir,
+target_size=(img_width, img_height),
+color_mode="rgb",
+shuffle = False,
+class_mode='binary',
+batch_size=1)
+
+filenames = test_generator.filenames
+nb_samples = len(filenames)
+
+predict = model.predict_generator(test_generator,steps = nb_samples)
+y_pred = [i[0].round() for i in predict]
+
+# set y_true for test data
+images_clean = os.listdir('test/clean')
+images_error = os.listdir('test/error')
+filenames = list(np.concatenate((images_clean, images_error), axis=0))
+y_clean = np.zeros(len(images_clean))
+y_error =  np.ones(len(images_error))
+y_true = list(np.concatenate((y_clean, y_error), axis=0))
+
+print(classification_report(y_true, y_pred))
 
 result = dict(zip([each[0] for each in predict], [filename.split('.')[-2].split('/')[-1] for filename in filenames]))
 df = pd.DataFrame(result, index=range(1))
-df.to_csv(f'result_maxpooling_{ti}.csv', index=False)
-
-result
+df = df.T.reset_index()
+df.columns = ['y_pred', 'filename']
+df.head()
+df.to_csv(f'result_csv/result_maxpooling_{ti}.csv', index=False)
+plt.plot(y_true, y_pred)
