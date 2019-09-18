@@ -13,7 +13,7 @@ from PIL import Image
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-!pwd
+
 # CNN model setup
 # VERSION 2 zachariah047_384_960
 '''
@@ -62,7 +62,7 @@ nb_train_samples = 375000
 nb_validation_samples = 160000
 epochs = 15
 batch_size = 500
-location = !pwd
+location = os.getcwd()
 
 if K.image_data_format() == 'channels_first':
     input_shape = (3, img_width, img_height)
@@ -70,20 +70,20 @@ else:
     input_shape = (img_width, img_height, 3)
 
 n_images = nb_train_samples + nb_validation_samples
-print(f"[INFO] loading {n_images} images from '{location[-1].split('/')[-1]}' ...")
+print(f"[INFO] loading {n_images} images from '{location.split('/')[-1]}' ...")
 
 # build metrics
 def recall(y_true, y_pred):
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-        recall = true_positives / (possible_positives + K.epsilon())
-        return recall
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+    recall = true_positives / (possible_positives + K.epsilon())
+    return recall
 
 def precision(y_true, y_pred):
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-        precision = true_positives / (predicted_positives + K.epsilon())
-        return precision
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+    precision = true_positives / (predicted_positives + K.epsilon())
+    return precision
 
 def f1(y_true, y_pred):
     precision = precision(y_true, y_pred)
@@ -114,7 +114,7 @@ model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
 opt = Adam(lr=1e-4, decay=1e-4 / epochs)
-model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy', f1, precision, recall])
+model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy', f1])
 #optimizer='rmsprop',
 
 # checkpoint
@@ -173,6 +173,7 @@ nb_samples = len(filenames)
 
 predict = model.predict_generator(test_generator,steps = nb_samples)
 
+#print(classification_report(testY.argmax(axis=1), predictions.argmax(axis=1), target_names=["class1", "class2"]))
 
 # evaluate the network
 print("[INFO] evaluating network...")
@@ -195,6 +196,6 @@ plt.show()
 
 result = dict(zip([each[0] for each in predict], [filename.split('.')[-2].split('/')[-1] for filename in filenames]))
 df = pd.DataFrame(result, index=range(1))
-df.to_csv('result_maxpooling.csv', index=False)
+df.to_csv(f'result_maxpooling_{ti}.csv', index=False)
 
 result
