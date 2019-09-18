@@ -16,45 +16,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# CNN model setup
-# VERSION 2 zachariah047_384_960
-'''
-This script builds a image classification models to detect pixes-errors
-in video footage.
-steps to do first:
-- created a data/ folder
-- created train/ and validation/ subfolders inside data/
-- created clean/ and error/ subfolders inside train/ and validation/
-- put the clean pictures index 0-999 in data/train/clean
-- put the clean pictures index 1000-1400 in data/validation/clean
-
-- put the error pictures index 12500-13499 in data/train/error
-- put the error pictures index 13500-13900 in data/validation/error
-So that we have 1000 training examples for each class, and 400 validation examples for each class.
-In summary, this is our directory structure:
-
-data/
-    train/
-        error/
-            error001.jpg
-            error002.jpg
-            ...
-        clean/
-            clean001.jpg
-            clean002.jpg
-            ...
-    validation/
-        error/
-            error001.jpg
-            error002.jpg
-            ...
-        clean/
-            clean001.jpg
-            clean002.jpg
-            ...
-'''
-
-# dimensions of our images.
+# dimensions of input images
 img_width, img_height = 64, 64
 
 train_data_dir = 'keras_cnn/train/'
@@ -62,7 +24,7 @@ validation_data_dir = 'keras_cnn/validation/'
 test_dir = 'keras_cnn/test/'
 nb_train_samples = 375000
 nb_validation_samples = 160000
-epochs = 15
+epochs = 5
 batch_size = 300
 location = os.getcwd()
 !pwd
@@ -74,38 +36,16 @@ else:
 n_images = nb_train_samples + nb_validation_samples
 print(f"[INFO] loading {n_images} images from '{location.split('/')[-1]}' ...")
 
-K.clear_session()
-model = Sequential()
-# padding anschalten um die ecken zu checken
-model.add(Conv2D(8, (3, 3), input_shape=input_shape, strides=(2,2), padding='same', kernel_regularizer=regularizers.l2(0.01), use_bias=True))
-#odel.add(BatchNormalization(epsilon=1e-06, mode=0, momentum=0.9, weights=None))
-model.add(Activation('relu'))
 
-model.add(Conv2D(8, (3, 3), padding='same', strides=(2,2), kernel_regularizer=regularizers.l2(0.01), use_bias=True))
-#model.add(BatchNormalization())
-model.add(Activation('relu'))
-
-model.add(Dropout(0.5))
-model.add(Conv2D(32, (3, 3), use_bias=True, strides=(2,2), kernel_regularizer=regularizers.l2(0.01),))
-#model.add(BatchNormalization())
-model.add(Activation('relu'))
-
-model.add(Flatten())
-model.add(Dense(64))
-#model.add(BatchNormalization())
-model.add(Activation('relu'))
-
-model.add(Dropout(0.5))
-model.add(Dense(1))
-model.add(Activation('sigmoid'))
-opt = Adam(lr=1e-4, decay=1e-4 / epochs)
-model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
-
-# checkpoints
-checkpoint = ModelCheckpoint(filepath='keras_cnn/model/bestmodel_weights_strides.hdf5', monitor='val_acc', verbose=1, save_best_only=True, mode='max')
-earlystopper = EarlyStopping(monitor='val_loss', patience=4, verbose=1)
-callbacks_list = [checkpoint]
+# Model reconstruction from JSON file
+with open('keras_cnn/model/model_strides_11-24-50.json', 'r') as f:
+    model = model_from_json(f.read())
+# Load weights into the new model
+model.load_weights('keras_cnn/model/cnn-model_strides_11-24-50.h5')
 model.summary()
+# evaluate the network
+print("[INFO] predicting pixel errors...")
+
 
 # this is the augmentation configuration we will use for training
 train_datagen = ImageDataGenerator(horizontal_flip=True)
@@ -175,17 +115,30 @@ y_pred = [i[0].round() for i in predict]
 # set y_true for test data
 images_clean = os.listdir('keras_cnn/test/clean')
 images_error = os.listdir('keras_cnn/test/error')
-filenames = list(np.concatenate((images_clean, images_error), axis=0))
 y_clean = np.zeros(len(images_clean))
 y_error =  np.ones(len(images_error))
+y_true = list(np.concatenate((y_clean, y_error), axis=0))
+filenames = list(np.concatenate((images_clean, images_error), axis=0))
+loc_folder = ['/clean/']*len(images_clean)+['/error/']*len(images_error)
+loc_images = list(np.concatenate((images_clean, images_error), axis=0))
+src_img=[]
+for i in range(len(loc_folder)):
+    src_img.append(loc_folder[i] + loc_images[i])
+y_clean = np.zeros(len(images_clean))
+y_error = np.ones(len(images_error))
 y_true = list(np.concatenate((y_clean, y_error), axis=0))
 
 print(classification_report(y_true, y_pred))
 
-result = dict(zip([each[0] for each in predict], [filename.split('.')[-2].split('/')[-1] for filename in filenames]))
+result = dict(zip([each[0] for each in predict], src_img))
 df = pd.DataFrame(result, index=range(1))
 df = df.T.reset_index()
-df.columns = ['y_pred', 'filename']
-df.head()
+df.columns = ['y_pred', 'file']
 df.to_csv(f'keras_cnn/result_csv/result_strides_{ti}.csv', index=False)
-plt.plot(y_true, y_pred)
+
+from PIL import Image
+for _, row in df[150:165].iterrows():
+    print(row["y_pred"])
+    pil = Image.open(f"keras_cnn/test/{row['file']}", "r")
+    df['img'] = plt.imshow(np.asarray(pil))
+    plt.figure()

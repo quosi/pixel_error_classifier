@@ -10,13 +10,42 @@ import os
 epochs = 15
 ti = strftime("%d_%H-%M-%S", gmtime())
 img_width, img_height = 64, 64
-test_dir = 'test/'
-
+test_dir = 'keras_cnn/test/'
+!pwd
 # Model reconstruction from JSON file
-with open('model/model_maxpooling_18_18-02-33.json', 'r') as f:
+with open('keras_cnn/model/model_strides_11-24-50.json', 'r') as f:
     model = model_from_json(f.read())
 # Load weights into the new model
-model.load_weights('model/cnn-model_maxpooling_18_18-02-33.h5')
+model.load_weights('keras_cnn/model/cnn-model_strides_11-24-50.h5')
+
+
+# save a list of np.arrays with the weights
+w = model.get_weights()
+
+# see the underlying TensorFlow variables
+model.weights
+
+# extract the names of the TF variables
+[v.name for v in model.weights]
+
+# plot weights of one layer (for MNIST)
+import matplotlib.pyplot as plt
+
+from IPython.display import SVG
+from keras.utils.vis_utils import model_to_dot
+import pydot
+
+SVG(model_to_dot(model, show_shapes=True, show_layer_names=True, rankdir='HB').create(prog='dot', format='svg'))
+
+
+
+
+
+
+
+
+
+
 
 # evaluate the network
 print("[INFO] predicting pixel errors...")
@@ -36,29 +65,32 @@ predict = model.predict_generator(test_generator,steps = nb_samples)
 y_pred = [i[0].round() for i in predict]
 
 # set y_true for test data
-images_clean = os.listdir('test/clean')
-images_error = os.listdir('test/error')
+images_clean = os.listdir('keras_cnn/test/clean')
+images_error = os.listdir('keras_cnn/test/error')
 filenames = list(np.concatenate((images_clean, images_error), axis=0))
+loc_folder = ['/clean/']*len(images_clean)+['/error/']*len(images_error)
+loc_images = list(np.concatenate((images_clean, images_error), axis=0))
+src_img=[]
+for i in range(len(loc_folder)):
+    src_img.append(loc_folder[i] + loc_images[i])
 y_clean = np.zeros(len(images_clean))
-y_error =  np.ones(len(images_error))
+y_error = np.ones(len(images_error))
 y_true = list(np.concatenate((y_clean, y_error), axis=0))
 
 print(classification_report(y_true, y_pred))
 
-result = dict(zip([each[0] for each in predict], [filename.split('.')[-2].split('/')[-1] for filename in filenames]))
+#result = dict(zip([each[0] for each in predict], [filename.split('.')[-2].split('/')[-1] for filename in filenames]))
+result = dict(zip([each[0] for each in predict], src_img))
 df = pd.DataFrame(result, index=range(1))
 df = df.T.reset_index()
-df.columns = ['y_pred', 'filename']
-df
-df.to_csv(f'result_csv/result_strides_{ti}.csv', index=False)
+df.columns = ['y_pred', 'file']
+df.head()
+df.to_csv(f'keras_cnn/result_csv/result_strides_{ti}.csv', index=False)
 plt.plot(y_true, y_pred)
-
-print(df.iloc[0])
-image.open[f'test/']
-
 
 from PIL import Image
 for _, row in df.head().iterrows():
     print(row["y_pred"])
-    pil = Image.open(f"test/{row["filename"]}.png", "r")
-    imshow(np.asarray(pil))
+    pil = Image.open(f"keras_cnn/test/{row['file']}", "r")
+    df['img'] = plt.imshow(np.asarray(pil))
+    plt.figure()
