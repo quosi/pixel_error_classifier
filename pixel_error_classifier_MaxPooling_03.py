@@ -1,12 +1,13 @@
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.optimizers import Adam
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense
-from keras.layers.normalization import BatchNormalization
-from keras.optimizers import Adam
 from keras import regularizers
 from keras import backend as K
+from sklearn.metrics import classification_report
+from keras.layers.normalization import BatchNormalization
 
 from time import gmtime, strftime
 import os, random
@@ -103,7 +104,7 @@ model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
 opt = Adam(lr=1e-4, decay=1e-4 / epochs)
-model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy', f1])
+model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
 #optimizer='rmsprop',
 
 # checkpoint

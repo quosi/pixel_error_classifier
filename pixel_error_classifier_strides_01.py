@@ -57,9 +57,9 @@ data/
 # dimensions of our images.
 img_width, img_height = 64, 64
 
-train_data_dir = 'train/'
-validation_data_dir = 'validation/'
-test_dir = 'test/'
+train_data_dir = 'keras_cnn/train/'
+validation_data_dir = 'keras_cnn/validation/'
+test_dir = 'keras_cnn/test/'
 nb_train_samples = 375000
 nb_validation_samples = 160000
 epochs = 15
@@ -72,7 +72,7 @@ else:
     input_shape = (img_width, img_height, 3)
 
 n_images = nb_train_samples + nb_validation_samples
-print(f"[INFO] loading {n_images} images from '{location[-1].split('/')[-1]}' ...")
+print(f"[INFO] loading {n_images} images from '{location.split('/')[-1]}' ...")
 
 
 K.clear_session()
@@ -103,7 +103,7 @@ opt = Adam(lr=1e-4, decay=1e-4 / epochs)
 model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
 
 # checkpoints
-checkpoint = ModelCheckpoint(filepath='model/bestmodel_weights_strides.hdf5', monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+checkpoint = ModelCheckpoint(filepath='keras_cnn/model/bestmodel_weights_strides.hdf5', monitor='val_acc', verbose=1, save_best_only=True, mode='max')
 earlystopper = EarlyStopping(monitor='val_loss', patience=4, verbose=1)
 callbacks_list = [checkpoint]
 model.summary()
@@ -138,10 +138,10 @@ hist = model.fit_generator(
 ti = strftime("%d_%H-%M-%S", gmtime())
 
 # save eights to HDF5
-model.save_weights(f'model/cnn-model_strides_{ti}.h5')
+model.save_weights(f'keras_cnn/model/cnn-model_strides_{ti}.h5')
 print("Saved model to disk")
 # save model to JSON
-with open(f"model/model_strides_{ti}.json", "w") as json_file:
+with open(f"keras_cnn/model/model_strides_{ti}.json", "w") as json_file:
     json_file.write(model.to_json())
 
 # evaluate the network
@@ -157,7 +157,7 @@ plt.title("Training Loss and Accuracy on Dataset")
 plt.xlabel(f"Epoch (max. {epochs})")
 plt.ylabel("Loss/Accuracy")
 plt.legend(loc="lower left")
-plt.savefig(f"plots/plot_strides_{ti}.png")
+plt.savefig(f"keras_cnn/plots/plot_strides_{ti}.png")
 plt.show()
 
 test_generator = test_datagen.flow_from_directory(
@@ -174,8 +174,8 @@ predict = model.predict_generator(test_generator,steps = nb_samples)
 y_pred = [i[0].round() for i in predict]
 
 # set y_true for test data
-images_clean = os.listdir('test/clean')
-images_error = os.listdir('test/error')
+images_clean = os.listdir('keras_cnn/test/clean')
+images_error = os.listdir('keras_cnn/test/error')
 filenames = list(np.concatenate((images_clean, images_error), axis=0))
 y_clean = np.zeros(len(images_clean))
 y_error =  np.ones(len(images_error))
@@ -188,5 +188,5 @@ df = pd.DataFrame(result, index=range(1))
 df = df.T.reset_index()
 df.columns = ['y_pred', 'filename']
 df.head()
-df.to_csv(f'result_csv/result_strides_{ti}.csv', index=False)
+df.to_csv(f'keras_cnn/result_csv/result_strides_{ti}.csv', index=False)
 plt.plot(y_true, y_pred)
