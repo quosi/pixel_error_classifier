@@ -6,6 +6,8 @@ from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense
 from keras import regularizers
 from keras import backend as K
+from sklearn.metrics import classification_report
+from keras.layers.normalization import BatchNormalization
 
 from time import gmtime, strftime
 import os, random
@@ -72,47 +74,35 @@ else:
 n_images = nb_train_samples + nb_validation_samples
 print(f"[INFO] loading {n_images} images from '{location[-1].split('/')[-1]}' ...")
 
-# build metrics
-def recall(y_true, y_pred):
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-        recall = true_positives / (possible_positives + K.epsilon())
-        return recall
-
-def precision(y_true, y_pred):
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-        precision = true_positives / (predicted_positives + K.epsilon())
-        return precision
-
-def f1(y_true, y_pred):
-    precision = precision(y_true, y_pred)
-    recall = recall(y_true, y_pred)
-    return 2*((precision*recall)/(precision+recall+K.epsilon()))
 
 K.clear_session()
 model = Sequential()
 # padding anschalten um die ecken zu checken
 model.add(Conv2D(8, (3, 3), input_shape=input_shape, strides=(2,2), padding='same', kernel_regularizer=regularizers.l2(0.01), use_bias=True))
+model.add(BatchNormalization(epsilon=1e-06, mode=0, momentum=0.9, weights=None))
 model.add(Activation('relu'))
 #model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Conv2D(8, (3, 3), padding='same', strides=(2,2), kernel_regularizer=regularizers.l2(0.01), use_bias=True))
+model.add(BatchNormalization())
 model.add(Activation('relu'))
 #model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Conv2D(32, (3, 3), use_bias=True, strides=(2,2), kernel_regularizer=regularizers.l2(0.01),))
+model.add(BatchNormalization())
 model.add(Activation('relu'))
 #model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Flatten())
 model.add(Dense(64))
+model.add(BatchNormalization())
 model.add(Activation('relu'))
+
 model.add(Dropout(0.5))
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
 opt = Adam(lr=1e-4, decay=1e-4 / epochs)
-model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy', f1, precision, recall])
+model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
 #              optimizer='rmsprop',
 # checkpoint
 checkpoint = ModelCheckpoint(filepath='model/bestmodel_weights_strides.hdf5', monitor='val_acc', verbose=1, save_best_only=True, mode='max')
@@ -145,7 +135,7 @@ hist = model.fit_generator(
     epochs=epochs,
     validation_data=validation_generator,
     validation_steps=nb_validation_samples // batch_size,
-    callbacks=[checkpoint])
+    callbacks=[callbacks_list])
 
 ti = strftime("%H-%M-%S", gmtime())
 
@@ -170,6 +160,7 @@ nb_samples = len(filenames)
 predict = model.predict_generator(test_generator,steps = nb_samples)
 
 
+
 # evaluate the network
 print("[INFO] evaluating network...")
 # print(classification_report(testY.argmax(axis=1), predict.argmax(axis=1), target_names=lb.classes_))
@@ -192,5 +183,6 @@ plt.show()
 result = dict(zip([each[0] for each in predict], [filename.split('.')[-2].split('/')[-1] for filename in filenames]))
 df = pd.DataFrame(result, index=range(1))
 df.to_csv('result_strides.csv', index=False)
+
 
 result
