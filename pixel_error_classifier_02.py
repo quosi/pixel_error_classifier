@@ -63,7 +63,7 @@ nb_validation_samples = 160000
 epochs = 15
 batch_size = 300
 location = os.getcwd()
-!pwd
+
 if K.image_data_format() == 'channels_first':
     input_shape = (3, img_width, img_height)
 else:
