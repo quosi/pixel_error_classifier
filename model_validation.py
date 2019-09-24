@@ -6,6 +6,11 @@ from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
 import os
+import matplotlib.pyplot as plt
+from IPython.display import SVG
+from keras.utils.vis_utils import model_to_dot
+import pydot
+import cv2
 
 epochs = 15
 ti = strftime("%d_%H-%M-%S", gmtime())
@@ -18,7 +23,6 @@ with open('keras_cnn/model/model_strides_11-24-50.json', 'r') as f:
 # Load weights into the new model
 model.load_weights('keras_cnn/model/cnn-model_strides_11-24-50.h5')
 
-
 # save a list of np.arrays with the weights
 w = model.get_weights()
 
@@ -29,26 +33,8 @@ model.weights
 [v.name for v in model.weights]
 
 # plot weights of one layer (for MNIST)
-import matplotlib.pyplot as plt
-
-from IPython.display import SVG
-from keras.utils.vis_utils import model_to_dot
-import pydot
 
 SVG(model_to_dot(model, show_shapes=True, show_layer_names=True, rankdir='HB').create(prog='dot', format='svg'))
-
-
-
-
-
-
-
-
-
-
-
-# evaluate the network
-print("[INFO] predicting pixel errors...")
 
 # prediction
 test_datagen = ImageDataGenerator()
