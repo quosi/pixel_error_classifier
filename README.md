@@ -1,4 +1,4 @@
-<img align="right" width="100" height="100" src="https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/logo.png">
+<img align="right" width="170" height="100" src="https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/logo.png">
 
 # Pixel Error classification
 #### Project Description ####
@@ -21,9 +21,12 @@ The Keras ImageDataGenerator is utilized to split the data set into train and te
 
 ## Building and optimizing the Model
 #### Building ####
-The CNN model contains of three 2D convolution layers with a 3x3 kernal size and a dense layer with a sigmoid function on the end for a binary classification. Between both sections a additional dense layer is applied to  flatten the three dimensional image data (matrix of features) into a one dimensional array.
 
-To downsample the number of features from the size of the input image (63x63x3) to a binary output(2), strides of 2x2 was used instead of max pooling, as it resulted in better accuracy score.
+![CNN structure](https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/cnn_structure.png)
+
+The CNN model contains several 2D convolution layers with a 3x3 kernal size and a dense layer with a sigmoid function on the end for a binary classification. Between both sections a additional dense layer is applied to flatten the three dimensional image data (matrix of image pixels) into a one dimensional array.
+
+To downsample the number of features (pixels) from the size of the input image (64x64x3) to a binary output(2), strides of 2x2 was used instead of max pooling, as it resulted in better accuracy score.
 
 #### Optimisation ####
 Overfitting was not much of a problem for this network, but regularization tools where still applied to improve the processing time of the network. By decresing the number of neurons during training (Dropout), but still maintaining a significant number of neurons in each layer. Also the accuracy of the model was improving slightly (L2). 
@@ -32,8 +35,16 @@ Used regularisation technics:
 * Dropout
 * L2 
 
+<img align="right" src="https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/training_score.png">
+
 #### Dropout ####
 At every iteration a randomly selected number of neurons will not be concidered along with all of their incoming and outgoing connections. This shall make the network generally more robust to the inputs. Dropout can be applied to hidden layers and input layers alike. Note that this regulizer is only used during training, and not during testing.
 
 #### L2 ####
 A neural network with smaller weight matrices leads to simpler models. Utilizing L2 regulization therefore, will reduce overfitting. L2 is also known as weight decay and will forces the weights to decay towards zero (but not exactly zero). For comparison, the L1 regulizer would reduce the weigth to zero and therefore further compress the size of the model.
+
+## Application
+
+![Result](https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/error_classification.png)
+
+The model and weight are stores during training (to prevent loss of data) and afterwards into JSON and HDF5 files for usage in the Video Quality Checker Python script.
