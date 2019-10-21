@@ -1,4 +1,4 @@
-<img align="right" width="170" height="100" src="https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/logo.png">
+<img align="right" width="150" height="100" src="https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/logo.png">
 
 # Pixel Error classification
 #### Project Description ####
@@ -29,13 +29,12 @@ The CNN model contains several 2D convolution layers with a 3x3 kernal size and 
 To downsample the number of features (pixels) from the size of the input image (64x64x3) to a binary output(2), strides of 2x2 was used instead of max pooling, as it resulted in better accuracy score.
 
 #### Optimisation ####
-Overfitting was not much of a problem for this network, but regularization tools where still applied to improve the processing time of the network. By decresing the number of neurons during training (Dropout), but still maintaining a significant number of neurons in each layer. Also the accuracy of the model was improving slightly (L2). 
-
-Used regularisation technics: 
-* Dropout
-* L2 
+Overfitting was not much of a problem for this network, but regularization tools where still applied to improve the processing time of the network. By decresing the number of neurons during training (Dropout), but still maintaining a significant number of neurons in each layer. Also the accuracy of the model was improving slightly (L2).
 
 <img align="right" src="https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/training_score.png">
+Used regularisation technics: 
+* Dropout
+* L2
 
 #### Dropout ####
 At every iteration a randomly selected number of neurons will not be concidered along with all of their incoming and outgoing connections. This shall make the network generally more robust to the inputs. Dropout can be applied to hidden layers and input layers alike. Note that this regulizer is only used during training, and not during testing.
