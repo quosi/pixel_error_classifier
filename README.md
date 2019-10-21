@@ -1,11 +1,11 @@
 # Pixel Error classification
 #### Project Description ####
 
-![alt text](https://github.com/quosi/pixel_error_classifier/master/logo.png "VidChecker Logo")
+![VidChecker Logo](https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/logo.png)
 
 As part of my Video Quality Checker project the scripts in this repository relate to the specific issue of pixel-error detection and classification. A deep learning methodology is used to build a binary classifier to detect death pixel in a video file. 
 
-![alt text](https://github.com/quosi/pixel_error_classifier/pixel-error-cat.png "Pixel error cat")
+![Pixel error cat](https://raw.githubusercontent.com/quosi/pixel_error_classifier/pixel-error-cat.png)
 
 ## Technology applied
 Convolutional neural networks are known to be especially suited for analyzing image data. For this project a CNN model is build using functions from the Keras Python package and sklearn library for validation.
