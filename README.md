@@ -1,4 +1,4 @@
-<img align="right" width="150" height="100" src="https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/logo.png">
+<img align="right" width="140" height="100" src="https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/logo.png">
 
 # Pixel Error classification
 #### Project Description ####
@@ -31,8 +31,8 @@ To downsample the number of features (pixels) from the size of the input image (
 #### Optimisation ####
 Overfitting was not much of a problem for this network, but regularization tools where still applied to improve the processing time of the network. By decresing the number of neurons during training (Dropout), but still maintaining a significant number of neurons in each layer. Also the accuracy of the model was improving slightly (L2).
 
+Used regularisation technics:
 <img align="right" src="https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/training_score.png">
-Used regularisation technics: 
 * Dropout
 * L2
 
