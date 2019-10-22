@@ -1,11 +1,11 @@
-<img align="right" width="140" height="100" src="https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/logo.png">
+<img align="right" width="140" height="100" src="https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/images/logo.png">
 
 # Pixel Error classification
 #### Project Description ####
 
 As part of my Video Quality Checker project the scripts in this repository relate to the specific issue of pixel-error detection and classification. A deep learning methodology is used to build a binary classifier to detect death pixel in a video file. 
 
-![Pixel error cat](https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/pixel-error-cat.png)
+![Pixel error cat](https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/images/pixel-error-cat.png)
 
 ## Technology applied
 Convolutional neural networks are known to be especially suited for analyzing image data. For this project a CNN model is build using functions from the Keras Python package and sklearn library for validation.
@@ -22,7 +22,7 @@ The Keras ImageDataGenerator is utilized to split the data set into train and te
 ## Building and optimizing the Model
 #### Building ####
 
-![CNN structure](https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/cnn_structure.png)
+![CNN structure](https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/images/cnn_structure.png)
 
 The CNN model contains several 2D convolution layers with a 3x3 kernal size and a dense layer with a sigmoid function on the end for a binary classification. Between both sections a additional dense layer is applied to flatten the three dimensional image data (matrix of image pixels) into a one dimensional array.
 
@@ -32,7 +32,7 @@ To downsample the number of features (pixels) from the size of the input image (
 Overfitting was not much of a problem for this network, but regularization tools where still applied to improve the processing time of the network. By decresing the number of neurons during training (Dropout), but still maintaining a significant number of neurons in each layer. Also the accuracy of the model was improving slightly (L2).
 
 Used regularisation technics:
-<img align="right" src="https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/training_score.png">
+<img align="right" src="https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/images/training_score.png">
 * Dropout
 * L2
 
@@ -44,6 +44,6 @@ A neural network with smaller weight matrices leads to simpler models. Utilizing
 
 ## Application
 
-![Result](https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/error_classification.png)
+![Result](https://raw.githubusercontent.com/quosi/pixel_error_classifier/master/images/error_classification.png)
 
 The model and weight are stores during training (to prevent loss of data) and afterwards into JSON and HDF5 files for usage in the Video Quality Checker Python script.
