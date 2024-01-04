@@ -1,23 +1,25 @@
 from keras.preprocessing.image import ImageDataGenerator
-from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.callbacks import ModelCheckpoint
+# from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
 from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D
+from keras.layers import Conv2D
+# from keras.layers import MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense
 from keras import regularizers
-from keras import backend as K
+from keras import backend as kerasBackend
 from sklearn.metrics import classification_report
-from keras.layers.normalization import BatchNormalization
+# from keras.layers import BatchNormalization
 
 from time import gmtime, strftime
-import os, random
-from PIL import Image
+import os
+# from PIL import Image
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 '''
-This script builds a image classification models to detect pixes-errors
+This script builds a image classification model to detect pixes-errors
 in video footage.
 steps to do first:
 - created a data/ folder
@@ -52,12 +54,10 @@ data/
             ...
 '''
 
+input_shape = (64, 64, 3)  # (img_width, img_height, color_channels)
+if kerasBackend.image_data_format() == 'channels_first':
+    input_shape = (3, 64, 64)  # (color_channels, img_width, img_height)
 
-
-if K.image_data_format() == 'channels_first':
-    input_shape = (3, img_width, img_height)
-else:
-    input_shape = (img_width, img_height, 3)
 
 def model_set_up(epochs, batch_size, dropout_rate):
     # dimensions of input images
@@ -75,25 +75,27 @@ def model_set_up(epochs, batch_size, dropout_rate):
     n_images = nb_train_samples + nb_validation_samples
     print(f"[INFO] loading {n_images} images from '{location.split('/')[-1]}' ...")
 
-    K.clear_session()
+    kerasBackend.clear_session()
     model = Sequential()
-    # padding anschalten um die ecken zu checken
-    model.add(Conv2D(8, (3, 3), input_shape=input_shape, strides=(2,2), padding='same', kernel_regularizer=regularizers.l2(0.01), use_bias=True))
-    #odel.add(BatchNormalization(epsilon=1e-06, mode=0, momentum=0.9, weights=None))
+    # turn on padding to enable corner-checking
+    model.add(Conv2D(8, (3, 3), input_shape=input_shape, strides=(2, 2), padding='same',
+                     kernel_regularizer=regularizers.l2(0.01), use_bias=True))
+    # model.add(BatchNormalization(epsilon=1e-06, mode=0, momentum=0.9, weights=None))
     model.add(Activation('relu'))
 
-    model.add(Conv2D(8, (3, 3), padding='same', strides=(2,2), kernel_regularizer=regularizers.l2(0.01), use_bias=True))
-    #model.add(BatchNormalization())
+    model.add(
+        Conv2D(8, (3, 3), padding='same', strides=(2, 2), kernel_regularizer=regularizers.l2(0.01), use_bias=True))
+    # model.add(BatchNormalization())
     model.add(Activation('relu'))
 
     model.add(Dropout(dropout_rate))
-    model.add(Conv2D(32, (3, 3), use_bias=True, strides=(2,2), kernel_regularizer=regularizers.l2(0.01),))
-    #model.add(BatchNormalization())
+    model.add(Conv2D(32, (3, 3), use_bias=True, strides=(2, 2), kernel_regularizer=regularizers.l2(0.01), ))
+    # model.add(BatchNormalization())
     model.add(Activation('relu'))
 
     model.add(Flatten())
     model.add(Dense(64))
-    #model.add(BatchNormalization())
+    # model.add(BatchNormalization())
     model.add(Activation('relu'))
 
     model.add(Dropout(dropout_rate))
@@ -103,9 +105,10 @@ def model_set_up(epochs, batch_size, dropout_rate):
     model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
 
     # checkpoints
-    checkpoint = ModelCheckpoint(filepath='keras_cnn/model/bestmodel_weights_strides.hdf5', monitor='val_acc', verbose=1, save_best_only=True, mode='max')
-    earlystopper = EarlyStopping(monitor='val_loss', patience=4, verbose=1)
-    callbacks_list = [checkpoint]
+    checkpoint = ModelCheckpoint(filepath='keras_cnn/model/bestmodel_weights_strides.hdf5', monitor='val_acc',
+                                 verbose=1, save_best_only=True, mode='max')
+    # earlystopper = EarlyStopping(monitor='val_loss', patience=4, verbose=1)
+    # callbacks_list = [checkpoint]
     model.summary()
 
     # this is the augmentation configuration we will use for training
@@ -161,39 +164,42 @@ def model_set_up(epochs, batch_size, dropout_rate):
     plt.show()
 
     test_generator = test_datagen.flow_from_directory(
-    test_dir,
-    target_size=(img_width, img_height),
-    color_mode="rgb",
-    shuffle = False,
-    class_mode='binary',
-    batch_size=1)
+        test_dir,
+        target_size=(img_width, img_height),
+        color_mode="rgb",
+        shuffle=False,
+        class_mode='binary',
+        batch_size=1)
 
     filenames = test_generator.filenames
     nb_samples = len(filenames)
-    predict = model.predict_generator(test_generator,steps = nb_samples)
-    y_pred = [i[0].round() for i in predict]
+    predict = model.predict_generator(test_generator, steps=nb_samples)
+    y_predict = [i[0].round() for i in predict]
 
     # set y_true for test data
     images_clean = os.listdir('keras_cnn/test/clean')
     images_error = os.listdir('keras_cnn/test/error')
     y_clean = np.zeros(len(images_clean))
-    y_error =  np.ones(len(images_error))
+    y_error = np.ones(len(images_error))
     y_true = list(np.concatenate((y_clean, y_error), axis=0))
     filenames = list(np.concatenate((images_clean, images_error), axis=0))
-    loc_folder = ['/clean/']*len(images_clean)+['/error/']*len(images_error)
+    loc_folder = ['/clean/'] * len(images_clean) + ['/error/'] * len(images_error)
     loc_images = list(np.concatenate((images_clean, images_error), axis=0))
-    src_img=[]
+    src_img = []
     for i in range(len(loc_folder)):
         src_img.append(loc_folder[i] + loc_images[i])
     y_clean = np.zeros(len(images_clean))
     y_error = np.ones(len(images_error))
     y_true = list(np.concatenate((y_clean, y_error), axis=0))
 
-    print(classification_report(y_true, y_pred))
+    print(classification_report(y_true, y_predict))
 
     result = dict(zip([each[0] for each in predict], src_img))
     df = pd.DataFrame(result, index=range(1))
     df = df.T.reset_index()
-    df.columns = ['y_pred', 'file']
+    df.columns = ['y_predict', 'file']
     df.to_csv(f'keras_cnn/result_csv/result_strides_{ti}.csv', index=False)
-model_set_up()
+
+
+if __name__ == "__main__":
+    model_set_up(15, 20, 5)
